@@ -37,7 +37,7 @@ public class SocketProcessor implements Runnable {
 
     private void writeResponse(String s) throws Throwable {
         String response = "HTTP/1.1 200 OK\r\n" +
-                "Server: YarServer/2009-09-09\r\n" +
+                "Server: FirewallServer/2009-09-09\r\n" +
                 "Content-Type: text/html\r\n" +
                 "Content-Length: " + s.length() + "\r\n" +
                 "Connection: close\r\n\r\n";
