@@ -9,7 +9,7 @@ public class Main
 	{
 		new Thread(new BlackList("d:/blacklist.txt", 1000l)).start();
 
-		HttpServer server = new HttpServer(new InternalSystemResourceImpl());
+		SimpleHttpFirewallServer server = new SimpleHttpFirewallServer(new InternalSystemResourceImpl("http://chesordben006:62108/OrderService"));
 		try
 		{
 			server.start(8081);

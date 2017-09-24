@@ -8,11 +8,11 @@ import com.sfw.main.util.BlackList;
 import com.sfw.processor.SocketProcessor;
 import com.sfw.resource.InternalSystemResource;
 
-public class HttpServer {
+public class SimpleHttpFirewallServer {
 	private InternalSystemResource internalSystemResource;
 	private ServerSocket ss;
 	
-	public HttpServer(InternalSystemResource internalSystemResource)
+	public SimpleHttpFirewallServer(InternalSystemResource internalSystemResource)
 	{
 		this.internalSystemResource = internalSystemResource;
 	}

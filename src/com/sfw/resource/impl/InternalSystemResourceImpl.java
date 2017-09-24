@@ -13,72 +13,97 @@ import java.util.Map.Entry;
 
 import com.sfw.resource.InternalSystemResource;
 
-public class InternalSystemResourceImpl implements InternalSystemResource
-{
+public class InternalSystemResourceImpl implements InternalSystemResource {
+	
+	private String proxiedResourceURL;
+	public InternalSystemResourceImpl(String proxiedResourceURL)
+	{
+		this.proxiedResourceURL = proxiedResourceURL;
+	}
 	@Override
 	public String sendDataToInternalSystem(InputStream is) throws IOException
 	{
-		 BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		 int readSize = 0;
-		 
-		String fl =  br.readLine();
+		BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
-		 String requestMethod = fl.split(" ")[0];
-		 Map<String, String> requestHeaders = new HashMap<String, String>();
-	        while(true) {
-	            String s = br.readLine();            
-	            
-	            if(s == null || s.trim().length() == 0) {
-	                break;
-	            }
-	            
-	            requestHeaders.put(s.split(":")[0].trim(), s.split(":")[1].trim());
+		String requestMethod = getRequestHeader(br);
+		Map<String, String> requestHeaders = getRequestHeaders(br);
+		String requestBody = getRequestBody(br, requestHeaders);
 
-	        }
-	        
-	        StringBuilder bodyBuilder = new StringBuilder();
-	       
-	        if(requestHeaders.get("Content-Length") != null)
-	        {
-	        	while(readSize < Integer.valueOf(requestHeaders.get("Content-Length"))) {
-		            String s = br.readLine();            
-		            readSize += s.length() + 1;
-		            
-		            bodyBuilder.append(s);
-		        }
-	        }        
-	        
-	        String url = "http://chesordben006:62108/OrderService";
+		URL obj = new URL(proxiedResourceURL);
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
-			URL obj = new URL(url);
-			HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		con.setRequestMethod(requestMethod);
+		con.setDoOutput(true);
 
-			con.setRequestMethod(requestMethod);
-			con.setDoOutput(true);
-			
-			for (Entry<String, String>requestHeader : requestHeaders.entrySet()) {
-				con.setRequestProperty(requestHeader.getKey(),  requestHeader.getValue());
+		for (Entry<String, String> requestHeader : requestHeaders.entrySet())
+		{
+			con.setRequestProperty(requestHeader.getKey(), requestHeader.getValue());
+		}
+		con.setRequestProperty("Accept-Encoding", "UTF-8");
+
+		if (requestHeaders.get("Content-Length") != null)
+		{
+			try (DataOutputStream wr = new DataOutputStream(con.getOutputStream()))
+			{
+				wr.write(requestBody.getBytes());
 			}
-			con.setRequestProperty("Accept-Encoding", "UTF-8");
+		}
 
-			 if(requestHeaders.get("Content-Length") != null)
-		     {
-				try( DataOutputStream wr = new DataOutputStream( con.getOutputStream())) {
-				  wr.write(bodyBuilder.toString().getBytes() );
-				}
-		     }
-			
+		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+		String inputLine;
+		StringBuffer response = new StringBuffer();
 
-			BufferedReader in = new BufferedReader(
-			        new InputStreamReader(con.getInputStream()));
-			String inputLine;
-			StringBuffer response = new StringBuffer();
+		while ((inputLine = in.readLine()) != null)
+		{
+			response.append(inputLine);
+		}
+		in.close();
 
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
-	        
-	        return response.toString();
+		return response.toString();
 	}
+
+	private Map<String, String> getRequestHeaders(BufferedReader br) throws IOException
+	{
+		Map<String, String> requestHeaders = new HashMap<String, String>();
+		while (true)
+		{
+			String s = br.readLine();
+
+			if (s == null || s.trim().length() == 0)
+			{
+				break;
+			}
+
+			requestHeaders.put(s.split(":")[0].trim(), s.split(":")[1].trim());
+
+		}
+
+		return requestHeaders;
+	}
+
+	private String getRequestHeader(BufferedReader br) throws IOException
+	{
+		return br.readLine().split(" ")[0];
+	}
+
+	private String getRequestBody(BufferedReader br, Map<String, String> requestHeaders) throws IOException
+	{
+		StringBuilder bodyBuilder = new StringBuilder();
+
+		int readSize = 0;
+		if (requestHeaders.get("Content-Length") != null)
+		{
+			while (readSize < Integer.valueOf(requestHeaders.get("Content-Length")))
+			{
+				String s = br.readLine();
+				readSize += s.length() + 1;
+
+				bodyBuilder.append(s);
+			}
+		}
+
+		return bodyBuilder.toString();
+
+	}
+
 }
